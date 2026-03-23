@@ -1,6 +1,6 @@
 # evals-101
 
-![evals-101 doodle](examples/readme-assets/evals-101-doodle.svg)
+![evals-101 banner](examples/readme-assets/evals-101-banner.png)
 
 `evals-101` evaluates the live `mcp-201` backend over its MCP HTTP endpoint. It runs deterministic gate suites for routing and security regressions, then optionally runs broader `DeepEval` nightly grading on the same live outputs.
 
@@ -29,6 +29,7 @@ This hybrid model is intentional:
 
 ## Repository layout
 
+- `docs/agent-handoff.md`: end-to-end overview for a new agent continuing deployment or extension work
 - `docs/mcp-201-baseline.md`: extracted contract and security baseline from `mcp-201`
 - `datasets/gate/`: deterministic datasets for CI and release checks
 - `datasets/nightly/`: broader prompts for nightly judge-model scoring
