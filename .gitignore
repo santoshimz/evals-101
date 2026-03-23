@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 reports/
 evals_101.egg-info/
+docs/
