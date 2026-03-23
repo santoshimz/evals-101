@@ -5,3 +5,4 @@ __pycache__/
 reports/
 evals_101.egg-info/
 docs/
+.cursor/
