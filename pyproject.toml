@@ -1,0 +1,28 @@
+[project]
+name = "evals-101"
+version = "0.1.0"
+description = "Evaluation harness for the live mcp-201 backend."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "deepeval",
+    "httpx",
+    "mcp",
+    "starlette",
+    "uvicorn",
+]
+
+[project.scripts]
+evals-101 = "evals_101.cli:main"
+evals-101-api = "evals_101.api:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["evals_101*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

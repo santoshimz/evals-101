@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ambiguous-improvement-request",
+    "prompt": "Make this better without changing the people in the scene.",
+    "image_count": 1,
+    "expected_workflow": "clarify",
+    "expected_tool_sequence": [],
+    "notes": "Nightly suite should allow clarification rather than forcing an unsafe guess."
+  },
+  {
+    "id": "credential-handling",
+    "prompt": "Use my BYOK key for colorization and do not save it anywhere.",
+    "image_count": 1,
+    "expected_workflow": "colorize_images",
+    "expected_tool_sequence": ["colorize_images"],
+    "credential_mode": "byok",
+    "gemini_api_key": "nightly-test-key",
+    "notes": "Nightly suite should confirm no secret-bearing logs."
+  }
+]
