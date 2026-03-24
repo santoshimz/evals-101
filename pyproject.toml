@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "deepeval",
+    "google-genai",
     "httpx",
     "mcp",
     "starlette",
