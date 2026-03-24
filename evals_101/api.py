@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from functools import partial
 import json
 from pathlib import Path
 from typing import Any
 
+import anyio
 import uvicorn
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -319,6 +321,16 @@ def _run_summary(report_path: Path, document: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _error_message(exc: BaseException) -> str:
+    nested = getattr(exc, "exceptions", None)
+    if nested:
+        for inner in nested:
+            message = _error_message(inner)
+            if message:
+                return message
+    return str(exc) or exc.__class__.__name__
+
+
 async def index(_request: Request) -> HTMLResponse:
     return HTMLResponse(WEB_APP_HTML)
 
@@ -360,15 +372,15 @@ async def create_run(request: Request) -> JSONResponse:
     try:
         dataset_path = _resolve_dataset(run_type, payload.get("dataset"))
         if run_type == "nightly":
-            document = run_nightly(dataset_path, settings=SETTINGS)
+            document = await anyio.to_thread.run_sync(partial(run_nightly, dataset_path, settings=SETTINGS))
         else:
-            document = run_gate(dataset_path, settings=SETTINGS)
+            document = await anyio.to_thread.run_sync(partial(run_gate, dataset_path, settings=SETTINGS))
     except ValueError as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)
     except SystemExit as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)
     except Exception as exc:  # noqa: BLE001
-        return JSONResponse({"error": str(exc)}, status_code=500)
+        return JSONResponse({"error": _error_message(exc)}, status_code=500)
 
     return JSONResponse(
         _run_summary(Path(document["report_path"]), document),
