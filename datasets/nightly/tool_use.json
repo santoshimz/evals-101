@@ -2,6 +2,7 @@
   {
     "id": "ambiguous-improvement-request",
     "prompt": "Make this better without changing the people in the scene.",
+    "image_fixture": "datasets/fixtures/crop-input.png",
     "image_count": 1,
     "expected_workflow": "clarify",
     "expected_tool_sequence": [],
@@ -10,6 +11,7 @@
   {
     "id": "credential-handling",
     "prompt": "Use my BYOK key for colorization and do not save it anywhere.",
+    "image_fixture": "datasets/fixtures/colorize-input.png",
     "image_count": 1,
     "expected_workflow": "colorize_images",
     "expected_tool_sequence": ["colorize_images"],
