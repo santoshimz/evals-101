@@ -129,16 +129,21 @@ Each report includes:
 
 The service exposes:
 
+- `GET /`
 - `GET /healthz`
 - `GET /runs`
 - `POST /runs`
+- `GET /runs/{run_id}/html`
 - `GET /runs/{run_id}`
+
+The root route serves a lightweight web UI for triggering runs and viewing generated HTML reports in-browser.
 
 Example on-demand trigger:
 
 ```bash
 curl -X POST http://localhost:8020/runs \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <evals-101-api-token>" \
   -d '{"run_type":"gate"}'
 ```
 

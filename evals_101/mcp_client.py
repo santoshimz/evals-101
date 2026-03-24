@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -15,6 +17,7 @@ from mcp.client.streamable_http import streamable_http_client
 _SAMPLE_PNG_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2p4Z0AAAAASUVORK5CYII="
 )
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _image_payload(image_count: int) -> list[dict[str, str]]:
@@ -25,6 +28,28 @@ def _image_payload(image_count: int) -> list[dict[str, str]]:
         }
         for index in range(max(1, image_count))
     ]
+
+
+def _load_fixture_payload(image_count: int, case: dict[str, Any]) -> list[dict[str, str]] | None:
+    fixture_paths = case.get("image_fixtures")
+    if fixture_paths is None and case.get("image_fixture"):
+        fixture_paths = [case["image_fixture"]] * max(1, image_count)
+
+    if not fixture_paths:
+        return None
+
+    images: list[dict[str, str]] = []
+    for raw_path in fixture_paths:
+        fixture_path = (_REPO_ROOT / str(raw_path)).resolve()
+        if _REPO_ROOT not in fixture_path.parents or not fixture_path.is_file():
+            raise ValueError(f"Image fixture path must point to a file within the repo: {raw_path}")
+        images.append(
+            {
+                "filename": fixture_path.name,
+                "content_base64": base64.b64encode(fixture_path.read_bytes()).decode("ascii"),
+            }
+        )
+    return images
 
 
 def _redact(text: str, secrets: list[str]) -> str:
@@ -62,7 +87,7 @@ def _workflow_to_tool_name(workflow: str | None) -> str:
 
 def _payload_for_case(case: dict[str, Any], tool_name: str) -> tuple[dict[str, Any], list[str]]:
     image_count = int(case.get("image_count", 1))
-    payload: dict[str, Any] = {"images": _image_payload(image_count)}
+    payload: dict[str, Any] = {"images": _load_fixture_payload(image_count, case) or _image_payload(image_count)}
     secrets: list[str] = []
 
     if tool_name == "run_prompt_workflow":

@@ -9,6 +9,7 @@ from uuid import uuid4
 import httpx
 
 from .mcp_client import Mcp201RemoteSystem
+from .report_html import build_report_html_path, write_report_html
 from .reporting import ReportMetadata, build_report_document, build_report_path, write_report_document
 from .runners import Mcp201Runner
 from .runtime import RuntimeSettings
@@ -77,7 +78,9 @@ def run_gate(
     report = runner.evaluate(dataset_path)
     metadata = _build_metadata(settings, run_type="gate", dataset_path=dataset_path, output_path=output_path)
     document = build_report_document(report, metadata)
+    document["html_report_path"] = str(build_report_html_path(metadata.report_path))
     write_report_document(document, metadata.report_path)
+    write_report_html(document, document["html_report_path"])
     return document
 
 
@@ -112,6 +115,7 @@ def run_nightly(
     report = runner.evaluate(dataset_path)
     metadata = _build_metadata(settings, run_type="nightly", dataset_path=dataset_path, output_path=output_path)
     document = build_report_document(report, metadata)
+    document["html_report_path"] = str(build_report_html_path(metadata.report_path))
 
     metric = GEval(
         name="workflow_selection_quality",
@@ -155,4 +159,5 @@ def run_nightly(
         "evaluation_model": getattr(metric, "evaluation_model", None),
     }
     write_report_document(document, metadata.report_path)
+    write_report_html(document, document["html_report_path"])
     return document

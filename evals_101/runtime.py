@@ -21,13 +21,14 @@ class RuntimeSettings:
         reports_dir = Path(os.environ.get("EVALS_101_REPORTS_DIR", "reports")).expanduser()
         require_api_auth = os.environ.get("EVALS_101_REQUIRE_API_AUTH", "false").strip().lower() == "true"
         api_auth_token = os.environ.get("EVALS_101_API_AUTH_TOKEN", "").strip() or None
+        api_port = os.environ.get("EVALS_101_API_PORT", "").strip() or os.environ.get("PORT", "8020")
         return cls(
             mcp_201_base_url=os.environ.get("MCP_201_BASE_URL", "http://localhost:8010/mcp").strip()
             or "http://localhost:8010/mcp",
             mcp_201_auth_token=os.environ.get("MCP_201_AUTH_TOKEN", "").strip() or None,
             reports_dir=reports_dir,
             api_host=os.environ.get("EVALS_101_API_HOST", "0.0.0.0").strip() or "0.0.0.0",
-            api_port=int(os.environ.get("EVALS_101_API_PORT", "8020")),
+            api_port=int(api_port),
             require_api_auth=require_api_auth,
             api_auth_token=api_auth_token,
         )

@@ -129,6 +129,7 @@ class McpClientIntegrationTests(unittest.TestCase):
 
             self.assertEqual(document["summary"]["passed_cases"], 1)
             self.assertTrue(Path(document["report_path"]).exists())
+            self.assertTrue(Path(document["html_report_path"]).exists())
             self.assertEqual(document["cases"][0]["expected"]["gemini_api_key"], "[REDACTED]")
             self.assertNotIn(secret, json.dumps(document))
 
@@ -162,6 +163,54 @@ class ApiTests(unittest.TestCase):
 
                 self.assertEqual(response.status_code, 201)
                 self.assertEqual(response.json()["run_id"], "abc123")
+                self.assertEqual(response.json()["html_url"], "/runs/abc123/html")
+
+        anyio.run(scenario)
+
+    def test_api_serves_html_report_with_auth(self) -> None:
+        async def scenario() -> None:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                reports_dir = Path(temp_dir) / "reports"
+                report_path = reports_dir / "gate" / "20260323T000000Z-mcp-201-workflow_routing-abc123.json"
+                report_path.parent.mkdir(parents=True, exist_ok=True)
+                report_path.write_text(
+                    json.dumps(
+                        {
+                            "run_id": "abc123",
+                            "run_type": "gate",
+                            "created_at": "2026-03-23T00:00:00+00:00",
+                            "report_path": str(report_path),
+                            "summary": {
+                                "total_cases": 1,
+                                "passed_cases": 1,
+                                "failed_cases": 0,
+                                "pass_rate": 1.0,
+                                "security_passed": True,
+                                "security_messages": [],
+                            },
+                            "security": {"passed": True, "messages": []},
+                            "cases": [],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                settings = RuntimeSettings(
+                    reports_dir=reports_dir,
+                    require_api_auth=True,
+                    api_auth_token="api-secret",
+                )
+                transport = httpx.ASGITransport(app=api_app)
+                with patch("evals_101.api.SETTINGS", settings):
+                    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+                        response = await client.get(
+                            "/runs/abc123/html",
+                            headers={"Authorization": "Bearer api-secret"},
+                        )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("text/html", response.headers["content-type"])
+                self.assertIn("evals-101 report", response.text)
+                self.assertTrue(report_path.with_suffix(".html").exists())
 
         anyio.run(scenario)
 
