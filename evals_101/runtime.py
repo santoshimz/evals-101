@@ -18,8 +18,8 @@ class RuntimeSettings:
 
     @classmethod
     def from_env(cls) -> "RuntimeSettings":
-        reports_dir = Path(os.environ.get("EVALS_101_REPORTS_DIR", "reports")).expanduser()
-        require_api_auth = os.environ.get("EVALS_101_REQUIRE_API_AUTH", "false").strip().lower() == "true"
+        reports_dir = _reports_dir_from_env()
+        require_api_auth = _bool_from_env("EVALS_101_REQUIRE_API_AUTH", default=_is_railway_environment())
         api_auth_token = os.environ.get("EVALS_101_API_AUTH_TOKEN", "").strip() or None
         api_port = os.environ.get("EVALS_101_API_PORT", "").strip() or os.environ.get("PORT", "8020")
         return cls(
@@ -32,3 +32,26 @@ class RuntimeSettings:
             require_api_auth=require_api_auth,
             api_auth_token=api_auth_token,
         )
+
+
+def _is_railway_environment() -> bool:
+    return bool(os.environ.get("RAILWAY_ENVIRONMENT_ID", "").strip())
+
+
+def _bool_from_env(name: str, *, default: bool) -> bool:
+    raw_value = os.environ.get(name, "").strip().lower()
+    if not raw_value:
+        return default
+    return raw_value in {"1", "true", "yes", "on"}
+
+
+def _reports_dir_from_env() -> Path:
+    configured_dir = os.environ.get("EVALS_101_REPORTS_DIR", "").strip()
+    if configured_dir:
+        return Path(configured_dir).expanduser()
+
+    railway_volume_mount = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", "").strip()
+    if railway_volume_mount:
+        return Path(railway_volume_mount).expanduser() / "reports"
+
+    return Path("reports").expanduser()

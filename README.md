@@ -152,20 +152,33 @@ curl -X POST http://localhost:8020/runs \
 
 ## Railway deployment
 
-The included `Dockerfile` builds a single image that defaults to the HTTP service. Use the same image in Railway for:
+The repo now includes `railway.json`, which checks in the Railway builder, start command, restart policy, and `/healthz` healthcheck. The included `Dockerfile` still builds the same image and defaults to the HTTP service.
+
+Use the same image in Railway for:
 
 - a web service running `python -m evals_101.api`
 - scheduled gate jobs running `python -m evals_101.cli --dataset datasets/gate/workflow_routing.json --system mcp-201`
 - scheduled nightly jobs running `python -m evals_101.deepeval_runner --dataset datasets/nightly/tool_use.json --system mcp-201`
 
-Recommended Railway variables:
+When deployed on Railway, `evals-101` now defaults to:
+
+- `reports_dir=$RAILWAY_VOLUME_MOUNT_PATH/reports` when a volume is mounted
+- `api_port=$PORT`
+- `require_api_auth=true`
+
+Minimal Railway variables:
 
 - `MCP_201_BASE_URL`
 - `MCP_201_AUTH_TOKEN`
-- `EVALS_101_REPORTS_DIR=/data/reports`
-- `EVALS_101_REQUIRE_API_AUTH=true`
 - `EVALS_101_API_AUTH_TOKEN=<long-random-token>`
 - `GOOGLE_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` for nightly runs
+
+Optional Railway overrides:
+
+- `EVALS_101_REPORTS_DIR` if you want a custom path instead of the mounted-volume default
+- `EVALS_101_REQUIRE_API_AUTH` if you need to disable or explicitly re-enable API auth
+- `EVALS_101_API_PORT` or `EVALS_101_API_HOST` for non-standard networking
+- `EVALS_101_DEEPEVAL_MODEL` to override the default nightly judge model
 
 Build the container image locally with:
 
