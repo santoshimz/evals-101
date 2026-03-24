@@ -14,6 +14,8 @@ from .reporting import ReportMetadata, build_report_document, build_report_path,
 from .runners import Mcp201Runner
 from .runtime import RuntimeSettings
 
+_DEFAULT_GEMINI_JUDGE_MODEL = "gemini-2.5-pro"
+
 
 def _resolve_output_path(
     settings: RuntimeSettings,
@@ -85,11 +87,28 @@ def run_gate(
 
 
 def _ensure_model_credentials() -> None:
-    if os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"):
+    if (
+        os.environ.get("GOOGLE_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    ):
         return
     raise SystemExit(
-        "DeepEval nightly runs require a judge model key. Set OPENAI_API_KEY or ANTHROPIC_API_KEY first."
+        "DeepEval nightly runs require a judge model key. Set GOOGLE_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY first."
     )
+
+
+def _resolve_judge_model_config() -> tuple[str | None, dict[str, str]]:
+    google_api_key = os.environ.get("GOOGLE_API_KEY", "").strip()
+    if google_api_key:
+        return (
+            "google",
+            {
+                "api_key": google_api_key,
+                "model_name": os.environ.get("EVALS_101_DEEPEVAL_MODEL", "").strip() or _DEFAULT_GEMINI_JUDGE_MODEL,
+            },
+        )
+    return None, {}
 
 
 def run_nightly(
@@ -117,6 +136,17 @@ def run_nightly(
     document = build_report_document(report, metadata)
     document["html_report_path"] = str(build_report_html_path(metadata.report_path))
 
+    judge_provider, judge_config = _resolve_judge_model_config()
+    metric_kwargs: dict[str, Any] = {}
+    if judge_provider == "google":
+        from deepeval.models import GeminiModel
+
+        metric_kwargs["model"] = GeminiModel(
+            model=judge_config["model_name"],
+            api_key=judge_config["api_key"],
+            temperature=0,
+        )
+
     metric = GEval(
         name="workflow_selection_quality",
         criteria=(
@@ -128,6 +158,7 @@ def run_nightly(
             LLMTestCaseParams.ACTUAL_OUTPUT,
             LLMTestCaseParams.EXPECTED_OUTPUT,
         ],
+        **metric_kwargs,
     )
 
     nightly_passed = 0

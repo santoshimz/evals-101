@@ -57,7 +57,8 @@ This hybrid model is intentional:
 - `MCP_201_BASE_URL`: target MCP endpoint, default `http://localhost:8010/mcp`
 - `MCP_201_AUTH_TOKEN`: bearer token for secured `mcp-201` deployments
 - `EVALS_101_REPORTS_DIR`: report output directory, default `reports`
-- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`: required for nightly `DeepEval` runs
+- `GOOGLE_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`: required for nightly `DeepEval` runs
+- `EVALS_101_DEEPEVAL_MODEL`: optional Gemini judge model override, default `gemini-2.5-pro` when `GOOGLE_API_KEY` is set
 - `EVALS_101_REQUIRE_API_AUTH`: set to `true` to require auth on the eval service
 - `EVALS_101_API_AUTH_TOKEN`: bearer token for the eval service when API auth is enabled
 - `EVALS_101_API_PORT`: local/API service port, default `8020`
@@ -113,6 +114,8 @@ Example nightly run:
 
 ```bash
 . .venv/bin/activate
+export GOOGLE_API_KEY=<your-google-key>
+export EVALS_101_DEEPEVAL_MODEL=gemini-3-pro-preview
 python -m evals_101.deepeval_runner \
   --dataset datasets/nightly/tool_use.json \
   --system mcp-201
@@ -162,7 +165,7 @@ Recommended Railway variables:
 - `EVALS_101_REPORTS_DIR=/data/reports`
 - `EVALS_101_REQUIRE_API_AUTH=true`
 - `EVALS_101_API_AUTH_TOKEN=<long-random-token>`
-- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for nightly runs
+- `GOOGLE_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` for nightly runs
 
 Build the container image locally with:
 
@@ -172,4 +175,4 @@ Build the container image locally with:
 
 ## What popular package this is based on
 
-For the model-based nightly layer, `evals-101` is based on `DeepEval`. The deterministic CI layer remains custom because gate suites need exact, stable, non-flaky checks.
+For the model-based nightly layer, `evals-101` is based on `DeepEval`. When `GOOGLE_API_KEY` is present, nightly runs use Gemini as the judge model and default to `gemini-2.5-pro` unless you override it with `EVALS_101_DEEPEVAL_MODEL`. The deterministic CI layer remains custom because gate suites need exact, stable, non-flaky checks.
